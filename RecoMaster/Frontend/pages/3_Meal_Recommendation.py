@@ -3,9 +3,18 @@ import pandas as pd
 from random import uniform as rnd
 from ImageFinder.ImageFinder import get_images_links as find_image
 from streamlit_echarts import st_echarts
-
 import os
 import sys
+import requests
+
+# Check if the user is logged in
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+
+if not st.session_state.logged_in:
+    st.warning("Please log in to view the meal recommendation.")
+    st.write("[Log In here](../Login)")
+    st.stop()  # This stops the rest of the page from being rendered
 
 current_dir = os.path.dirname("C:/RecoMaster/Frontend/pages/1_Meal_Recommendation.py")
 parent_dir = os.path.dirname("C:/RecoMaster/Frontend/Generate_Recommendations.py")
@@ -14,8 +23,6 @@ from Generate_Recommendations import Generator
 
 st.set_page_config(page_title="Meal Recommendation", page_icon="💪",layout="wide")
 
-
-
 nutritions_values=['Calories','FatContent','SaturatedFatContent','CholesterolContent','SodiumContent','CarbohydrateContent','FiberContent','SugarContent','ProteinContent']
 # Streamlit states initialization
 if 'person' not in st.session_state:
@@ -23,8 +30,8 @@ if 'person' not in st.session_state:
     st.session_state.recommendations=None
     st.session_state.person=None
     st.session_state.weight_loss_option=None
-class Person:
 
+class Person:
     def __init__(self,age,height,weight,gender,activity,meals_calories_perc,weight_loss):
         self.age=age
         self.height=height
@@ -90,6 +97,27 @@ class Person:
         return recommendations
 
 class Display:
+    # def get_order_link(self, recipe_name):
+    #     # Construct Zomato order link
+    #     return f"https://www.zomato.com/mumbai/delivery/dish-{recipe_name.lower().replace(' ', '-')}"
+
+    # def get_order_link(self, recipe_name):
+    #     zomato_link = f"https://www.zomato.com/mumbai/delivery/dish-{recipe_name.lower().replace(' ', '-')}"
+    #     return zomato_link
+    
+    # def check_link(self, url):
+    #     try:
+    #         response = requests.get(url, allow_redirects=True, timeout=5)
+    #         # Check for status code and also look for 404 page content in Zomato
+    #         if response.status_code == 404 or "This is a 404 page and we think it's fairly clear You aren't going to find what you're looking for here But we know you're hungry, so don't fret or rage Hit that big red button to go back to our homepage" in response.text:
+    #             return False
+    #         return True
+    #     except requests.RequestException:
+    #         # If there's an error, assume the link is invalid
+    #         return False
+
+
+
     def __init__(self):
         self.plans=["Maintain weight","Mild weight loss","Weight loss","Extreme weight loss"]
         self.weights=[1,0.9,0.8,0.6]
@@ -114,7 +142,7 @@ class Display:
         for plan,weight,loss,col in zip(self.plans,self.weights,self.losses,st.columns(4)):
             with col:
                 st.metric(label=plan,value=f'{round(maintain_calories*weight)} Calories/day',delta=loss,delta_color="inverse")
-
+    
     def display_recommendation(self,person,recommendations):
         st.header('Meal RECOMMENDATOR')  
         with st.spinner('Generating recommendations...'): 
@@ -151,9 +179,23 @@ class Display:
                                 - Total Time      : {recipe['TotalTime']}min
                             """)          
 
-                        order_link = f"https://www.zomato.com/mumbai/delivery/dish-{recipe_name.lower().replace(' ', '-')}"
-                        expander.markdown(f'<a href="{order_link}" target="_blank"><button>Order Now</button></a>', unsafe_allow_html=True)
-           
+                        # order_link = f"https://www.zomato.com/mumbai/delivery/dish-{recipe_name.lower().replace(' ', '-')}"
+                        # expander.markdown(f'<a href="{order_link}" target="_blank"><button>Order Now</button></a>', unsafe_allow_html=True)
+                        # Check Zomato order link and handle 404 error
+                        # order_link = self.get_order_link(recipe_name)
+                        # if self.check_link(order_link):
+                        #     expander.markdown(f'<a href="{order_link}" target="_blank"><button>Order Now</button></a>',
+                        #                   unsafe_allow_html=True)
+                        # else:
+                        #     st.warning("Recipe not found on Zomato. Redirecting to a YouTube recipe video...")
+                        #     youtube_link = "https://www.youtube.com/"  # Replace with your desired YouTube link
+                        #     expander.markdown(f'<a href="{youtube_link}" target="_blank"><button>Watch on YouTube</button></a>',
+                        #                   unsafe_allow_html=True)     
+
+                        youtube_url = f"https://www.youtube.com/results?search_query={recipe_name.lower().replace(' ','+')}"
+
+                        expander.markdown(f'<a href="{youtube_url}" target="_blank"><button>Watch Recipe Video</button></a>', unsafe_allow_html=True)
+          
     def display_meal_choices(self,person,recommendations):    
         st.subheader('Choose your meal composition:')
         # Display meal compositions choices
